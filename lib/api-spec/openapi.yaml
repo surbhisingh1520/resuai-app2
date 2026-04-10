@@ -1,0 +1,613 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: AI Resume Checker API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: resumes
+    description: Resume operations
+  - name: analysis
+    description: AI analysis operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterBody"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid input or email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout user
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /resumes:
+    get:
+      operationId: getResumes
+      tags: [resumes]
+      summary: List user's resumes
+      responses:
+        "200":
+          description: List of resumes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Resume"
+    post:
+      operationId: createResume
+      tags: [resumes]
+      summary: Upload and create resume
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateResumeBody"
+      responses:
+        "201":
+          description: Resume created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /resumes/{id}:
+    get:
+      operationId: getResume
+      tags: [resumes]
+      summary: Get resume by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Resume
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resume"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteResume
+      tags: [resumes]
+      summary: Delete resume
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /resumes/{id}/analyze:
+    post:
+      operationId: analyzeResume
+      tags: [analysis]
+      summary: Analyze resume with AI
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnalyzeResumeBody"
+      responses:
+        "200":
+          description: Analysis result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeAnalysis"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /resumes/{id}/enhance:
+    post:
+      operationId: enhanceResume
+      tags: [analysis]
+      summary: Get enhancement suggestions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Enhancement suggestions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeEnhancement"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /resumes/{id}/interview-questions:
+    get:
+      operationId: getInterviewQuestions
+      tags: [analysis]
+      summary: Generate interview questions based on resume
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Interview questions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InterviewQuestions"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [resumes]
+      summary: Get dashboard statistics
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - email
+        - name
+        - createdAt
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+      required:
+        - user
+        - token
+
+    RegisterBody:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+      required:
+        - email
+        - password
+        - name
+
+    LoginBody:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    Resume:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        title:
+          type: string
+        content:
+          type: string
+        overallScore:
+          type: ["integer", "null"]
+        atsScore:
+          type: ["integer", "null"]
+        jobRole:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - userId
+        - title
+        - content
+        - overallScore
+        - atsScore
+        - jobRole
+        - createdAt
+        - updatedAt
+
+    CreateResumeBody:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        jobRole:
+          type: ["string", "null"]
+      required:
+        - title
+        - content
+
+    AnalyzeResumeBody:
+      type: object
+      properties:
+        jobRole:
+          type: string
+        jobDescription:
+          type: string
+
+    Skill:
+      type: object
+      properties:
+        name:
+          type: string
+        level:
+          type: string
+        category:
+          type: string
+      required:
+        - name
+        - level
+        - category
+
+    MissingSkill:
+      type: object
+      properties:
+        name:
+          type: string
+        importance:
+          type: string
+        reason:
+          type: string
+      required:
+        - name
+        - importance
+        - reason
+
+    CareerPath:
+      type: object
+      properties:
+        role:
+          type: string
+        match:
+          type: integer
+        description:
+          type: string
+      required:
+        - role
+        - match
+        - description
+
+    ResumeAnalysis:
+      type: object
+      properties:
+        resumeId:
+          type: integer
+        overallScore:
+          type: integer
+        atsScore:
+          type: integer
+        toneScore:
+          type: integer
+        clarityScore:
+          type: integer
+        impactScore:
+          type: integer
+        detectedSkills:
+          type: array
+          items:
+            $ref: "#/components/schemas/Skill"
+        missingSkills:
+          type: array
+          items:
+            $ref: "#/components/schemas/MissingSkill"
+        careerPaths:
+          type: array
+          items:
+            $ref: "#/components/schemas/CareerPath"
+        strengths:
+          type: array
+          items:
+            type: string
+        weaknesses:
+          type: array
+          items:
+            type: string
+        summary:
+          type: string
+        jobRoleMatch:
+          type: ["integer", "null"]
+        toneAnalysis:
+          type: string
+      required:
+        - resumeId
+        - overallScore
+        - atsScore
+        - toneScore
+        - clarityScore
+        - impactScore
+        - detectedSkills
+        - missingSkills
+        - careerPaths
+        - strengths
+        - weaknesses
+        - summary
+        - jobRoleMatch
+        - toneAnalysis
+
+    EnhancementItem:
+      type: object
+      properties:
+        section:
+          type: string
+        issue:
+          type: string
+        suggestion:
+          type: string
+        priority:
+          type: string
+        originalText:
+          type: ["string", "null"]
+        improvedText:
+          type: ["string", "null"]
+      required:
+        - section
+        - issue
+        - suggestion
+        - priority
+        - originalText
+        - improvedText
+
+    ResumeEnhancement:
+      type: object
+      properties:
+        resumeId:
+          type: integer
+        enhancements:
+          type: array
+          items:
+            $ref: "#/components/schemas/EnhancementItem"
+        rewrittenSummary:
+          type: ["string", "null"]
+        keywordsToAdd:
+          type: array
+          items:
+            type: string
+        formattingTips:
+          type: array
+          items:
+            type: string
+      required:
+        - resumeId
+        - enhancements
+        - rewrittenSummary
+        - keywordsToAdd
+        - formattingTips
+
+    InterviewQuestion:
+      type: object
+      properties:
+        question:
+          type: string
+        category:
+          type: string
+        difficulty:
+          type: string
+        tip:
+          type: string
+      required:
+        - question
+        - category
+        - difficulty
+        - tip
+
+    InterviewQuestions:
+      type: object
+      properties:
+        resumeId:
+          type: integer
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/InterviewQuestion"
+      required:
+        - resumeId
+        - questions
+
+    DashboardStats:
+      type: object
+      properties:
+        totalResumes:
+          type: integer
+        averageScore:
+          type: ["number", "null"]
+        bestScore:
+          type: ["integer", "null"]
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/Resume"
+      required:
+        - totalResumes
+        - averageScore
+        - bestScore
+        - recentActivity
